@@ -1,0 +1,26 @@
+{
+  "name": "purescript-simple-csv",
+  "homepage": "https://github.com/fujisawa/purescript-simple-csv",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fujisawa/purescript-simple-csv.git"
+  },
+  "authors": [
+    "Yoshiharu Fujisawa <yoshiharu.fujisawa@gmail.com>"
+  ],
+  "description": "Library for parsing and printing CSV and TSV",
+  "main": "",
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "purescript-strings": "^4.0.2",
+    "purescript-string-parsers": "^5.0.1",
+    "purescript-console": "^4.4.0"
+  }
+}
