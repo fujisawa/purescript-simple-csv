@@ -1,17 +1,17 @@
 module Text.CSV.Internal (CSV, TSV, CSVType(..), csvParser, escapeField) where
 
 import Control.MonadPlus ((<|>))
-import Data.Array (dropEnd, fromFoldable, head, many, reverse, (:))
-import Data.Maybe (Maybe(..), fromMaybe)
-import Data.String (Pattern(..), Replacement(..), replaceAll)
+import Data.Array (dropEnd, fromFoldable, head, many, reverse, some)
+import Data.Maybe (Maybe(..))
+import Data.String (Pattern(..), Replacement(..), joinWith, replaceAll)
 import Data.String.CodeUnits (fromCharArray)
 import Data.String.Regex (test)
 import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
-import Prelude (Unit, bind, discard, pure, unit, void, ($), (<$>), (<*>), (<>))
+import Prelude (Unit, bind, discard, pure, unit, void, ($), (<$>), (<<<), (<>))
 import Text.Parsing.StringParser (Parser)
 import Text.Parsing.StringParser.CodeUnits (anyChar, char, noneOf, oneOf)
-import Text.Parsing.StringParser.Combinators (optionMaybe, optional, sepBy, sepBy1)
+import Text.Parsing.StringParser.Combinators (manyTill, optional, sepBy, sepBy1)
 
 type CSV = Array (Array String)
 type TSV = CSV
@@ -40,22 +40,19 @@ csvParser csvType = do
       fromCharArray <$> (many $ noneOf [separator, '\r', '\n'])
 
 
-getEscaped :: Parser String
-getEscaped = do
-  void $ char '"'
-  fromCharArray <$> getRest
-  where getRest = do
-          a <- anyChar
-          case a of
-            '"' -> fromMaybe [] <$> optionMaybe ((:) <$> char '"' <*> getRest)
-            otherwise -> (:) a <$> getRest
+    getEscaped :: Parser String
+    getEscaped = do
+      joinWith "\"" <$> some quotedString
+      where quotedString = do
+              void $ char '"'
+              (fromCharArray <<< fromFoldable) <$> manyTill anyChar (char '"')
 
-newline :: Parser Unit
-newline = do
-  a <- oneOf ['\r', '\n']
-  case a of
-    '\r' -> optional $ char '\n'
-    _ -> pure unit
+    newline :: Parser Unit
+    newline = do
+      a <- oneOf ['\r', '\n']
+      case a of
+        '\r' -> optional $ char '\n'
+        _ -> pure unit
 
 escapeField :: CSVType -> String -> String
 escapeField csvType s =
