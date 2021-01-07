@@ -9,9 +9,9 @@ import Text.Parsing.StringParser (ParseError, runParser)
 -- | Read a CSV string to type CSV
 parse :: String -> Either ParseError CSV
 parse cs =
-  runParser (csvParser CSVtype) cs
+  runParser (csvParser CommaSeparated) cs
 
 -- | Print CSV value into RFC4180 compliant string
 print :: CSV -> String
 print csv =
-  joinWith "\r\n" $ map (joinWith "," <<< map (escapeField CSVtype)) csv
+  joinWith "\r\n" $ map (joinWith "," <<< map (escapeField CommaSeparated)) csv

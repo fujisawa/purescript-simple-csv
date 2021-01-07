@@ -16,7 +16,7 @@ import Text.Parsing.StringParser.Combinators (manyTill, optional, sepBy, sepBy1)
 type CSV = Array (Array String)
 type TSV = CSV
 
-data CSVType = CSVtype | TSVtype
+data CSVType = CommaSeparated | TabSeparated
 
 csvParser :: CSVType -> Parser CSV
 csvParser csvType = do
@@ -29,8 +29,8 @@ csvParser csvType = do
     recordParser = fromFoldable <$> sepBy fieldParser (char separator)
 
     separator = case csvType of
-      CSVtype -> ','
-      TSVtype -> '\t'
+      CommaSeparated -> ','
+      TabSeparated   -> '\t'
 
     fieldParser :: Parser String
     fieldParser = getEscaped <|> getNonescaped
@@ -62,5 +62,5 @@ escapeField csvType s =
   where quote s' =
           "\"" <> s' <> "\""
         separator = case csvType of
-          CSVtype -> "(,|\"|\n)"
-          TSVtype -> "(\t|\"|\n)"
+          CommaSeparated -> "(,|\"|\n)"
+          TabSeparated   -> "(\t|\"|\n)"
