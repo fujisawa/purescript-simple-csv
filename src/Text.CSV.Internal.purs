@@ -9,9 +9,9 @@ import Data.String.Regex (test)
 import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Prelude (Unit, bind, discard, pure, unit, void, ($), (<$>), (<<<), (<>))
-import Text.Parsing.StringParser (Parser)
-import Text.Parsing.StringParser.CodeUnits (anyChar, char, noneOf, oneOf)
-import Text.Parsing.StringParser.Combinators (manyTill, optional, sepBy, sepBy1)
+import StringParser (Parser)
+import StringParser.CodeUnits (anyChar, char, noneOf, oneOf)
+import StringParser.Combinators (manyTill, optional, sepBy, sepBy1)
 
 type CSV = Array (Array String)
 type TSV = CSV
@@ -23,7 +23,7 @@ csvParser csvType = do
   x <- fromFoldable <$> sepBy1 recordParser newline
   case head $ reverse x of
     Just [""] -> pure $ dropEnd 1 x
-    otherwise -> pure x
+    _ -> pure x
   where
     recordParser :: Parser (Array String)
     recordParser = fromFoldable <$> sepBy fieldParser (char separator)
