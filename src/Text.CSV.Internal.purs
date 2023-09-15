@@ -9,9 +9,9 @@ import Data.String.Regex (test)
 import Data.String.Regex.Flags (noFlags)
 import Data.String.Regex.Unsafe (unsafeRegex)
 import Prelude (Unit, bind, discard, pure, unit, void, ($), (<$>), (<<<), (<>))
-import Text.Parsing.StringParser (Parser)
-import Text.Parsing.StringParser.CodeUnits (anyChar, char, noneOf, oneOf)
-import Text.Parsing.StringParser.Combinators (manyTill, optional, sepBy, sepBy1)
+import StringParser (Parser)
+import StringParser.CodeUnits (anyChar, char, noneOf, oneOf)
+import StringParser.Combinators (manyTill, optional, sepBy, sepBy1)
 
 type CSV = Array (Array String)
 type TSV = CSV
@@ -22,45 +22,46 @@ csvParser :: CSVType -> Parser CSV
 csvParser csvType = do
   x <- fromFoldable <$> sepBy1 recordParser newline
   case head $ reverse x of
-    Just [""] -> pure $ dropEnd 1 x
-    otherwise -> pure x
+    Just [ "" ] -> pure $ dropEnd 1 x
+    _ -> pure x
+  -- otherwise -> pure x
   where
-    recordParser :: Parser (Array String)
-    recordParser = fromFoldable <$> sepBy fieldParser (char separator)
+  recordParser :: Parser (Array String)
+  recordParser = fromFoldable <$> sepBy fieldParser (char separator)
 
-    separator = case csvType of
-      CommaSeparated -> ','
-      TabSeparated   -> '\t'
+  separator = case csvType of
+    CommaSeparated -> ','
+    TabSeparated -> '\t'
 
-    fieldParser :: Parser String
-    fieldParser = getEscaped <|> getNonescaped
+  fieldParser :: Parser String
+  fieldParser = getEscaped <|> getNonescaped
 
-    getNonescaped:: Parser String
-    getNonescaped = do
-      fromCharArray <$> (many $ noneOf [separator, '\r', '\n'])
+  getNonescaped :: Parser String
+  getNonescaped = do
+    fromCharArray <$> (many $ noneOf [ separator, '\r', '\n' ])
 
+  getEscaped :: Parser String
+  getEscaped = do
+    joinWith "\"" <$> some quotedString
+    where
+    quotedString = do
+      void $ char '"'
+      (fromCharArray <<< fromFoldable) <$> manyTill anyChar (char '"')
 
-    getEscaped :: Parser String
-    getEscaped = do
-      joinWith "\"" <$> some quotedString
-      where quotedString = do
-              void $ char '"'
-              (fromCharArray <<< fromFoldable) <$> manyTill anyChar (char '"')
-
-    newline :: Parser Unit
-    newline = do
-      a <- oneOf ['\r', '\n']
-      case a of
-        '\r' -> optional $ char '\n'
-        _ -> pure unit
+  newline :: Parser Unit
+  newline = do
+    a <- oneOf [ '\r', '\n' ]
+    case a of
+      '\r' -> optional $ char '\n'
+      _ -> pure unit
 
 escapeField :: CSVType -> String -> String
 escapeField csvType s =
-  if test (unsafeRegex separator noFlags) s
-  then quote $ replaceAll (Pattern "\"") (Replacement "\"\"") s
+  if test (unsafeRegex separator noFlags) s then quote $ replaceAll (Pattern "\"") (Replacement "\"\"") s
   else s
-  where quote s' =
-          "\"" <> s' <> "\""
-        separator = case csvType of
-          CommaSeparated -> "(,|\"|\n)"
-          TabSeparated   -> "(\t|\"|\n)"
+  where
+  quote s' =
+    "\"" <> s' <> "\""
+  separator = case csvType of
+    CommaSeparated -> "(,|\"|\n)"
+    TabSeparated -> "(\t|\"|\n)"

@@ -4,7 +4,7 @@ import Data.Either (Either)
 import Data.String (joinWith)
 import Prelude (map, ($), (<<<))
 import Text.CSV.Internal (CSVType(..), TSV, csvParser, escapeField)
-import Text.Parsing.StringParser (ParseError, runParser)
+import StringParser (ParseError, runParser)
 
 -- | Read a TSV string to type TSV
 parse :: String -> Either ParseError TSV
